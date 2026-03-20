@@ -1,0 +1,1691 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Elementum — Learn the Periodic Table</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=Syne:wght@800&display=swap" rel="stylesheet">
+
+<!-- ============================================================
+     STYLES
+     All visual styling lives here. Edit colours in :root {}
+     ============================================================ -->
+<style>
+/* ---------- Colour palette (edit these to change the whole theme) ---------- */
+:root {
+  --bg:        #0a0e1a;   /* page background */
+  --surface:   #111827;   /* cards / panels  */
+  --border:    #2a3550;   /* borders         */
+  --text:      #e8edf8;   /* main text       */
+  --muted:     #7a8aaa;   /* secondary text  */
+  --accent:    #4f9eff;   /* blue highlight  */
+  --purple:    #7c3aed;   /* purple accent   */
+  --gold:      #f59e0b;   /* diamonds        */
+  --green:     #10b981;   /* success / lives */
+  --red:       #ef4444;   /* danger / death  */
+  --teal:      #06b6d4;   /* info banners    */
+  --orange:    #f97316;   /* timer           */
+}
+
+/* ---------- Reset & base ---------- */
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Space Grotesk', sans-serif;
+  min-height: 100vh;
+}
+
+/* ---------- Screen system ----------
+   Every "page" is a .screen div.
+   Only the one with class .active is shown. */
+.screen { display:none; min-height:100vh; flex-direction:column; align-items:center; justify-content:center; padding:2rem; }
+.screen.active { display:flex; }
+
+/* ---------- Buttons ---------- */
+.btn-primary {
+  background: linear-gradient(135deg, var(--accent), var(--purple));
+  color:#fff; border:none; border-radius:10px;
+  padding:0.85rem 2.2rem; font-family:inherit; font-size:1rem; font-weight:600;
+  cursor:pointer; transition:transform 0.15s, box-shadow 0.15s;
+}
+.btn-primary:hover { transform:translateY(-2px); box-shadow:0 8px 20px rgba(79,158,255,0.3); }
+.btn-primary:disabled { opacity:0.4; cursor:not-allowed; transform:none; box-shadow:none; }
+
+.btn-secondary {
+  background:var(--surface); color:var(--text);
+  border:1px solid var(--border); border-radius:10px;
+  padding:0.65rem 1.5rem; font-family:inherit; font-size:0.9rem; font-weight:500;
+  cursor:pointer; transition:background 0.15s;
+}
+.btn-secondary:hover { background:#1a2235; }
+
+/* ============================================================
+   SCREEN 1 — WELCOME
+   ============================================================ */
+#welcome-screen {
+  text-align:center;
+  background:
+    radial-gradient(ellipse at 20% 50%, #1a1040 0%, transparent 55%),
+    radial-gradient(ellipse at 80% 20%, #0d2040 0%, transparent 50%),
+    var(--bg);
+}
+.welcome-title {
+  font-family:'Syne', sans-serif;
+  font-size:clamp(2.8rem, 8vw, 5rem);
+  font-weight:800; letter-spacing:-2px; line-height:1;
+  background:linear-gradient(135deg, #4f9eff, #7c3aed, #06b6d4);
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+}
+.welcome-sub  { color:var(--muted); font-size:1.05rem; margin:0.8rem 0 0.4rem; }
+.welcome-desc { color:var(--muted); font-size:0.9rem; max-width:480px; line-height:1.7; margin:0 auto; }
+
+/* 3 feature cards on welcome screen */
+.feature-row { display:flex; gap:1rem; margin:2rem 0; flex-wrap:wrap; justify-content:center; max-width:640px; }
+.feat-card {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:12px; padding:1.1rem 1.3rem; text-align:left; flex:1; min-width:170px;
+}
+.feat-icon  { font-size:1.4rem; margin-bottom:0.4rem; }
+.feat-title { font-weight:600; font-size:0.88rem; margin-bottom:0.25rem; }
+.feat-desc  { font-size:0.76rem; color:var(--muted); line-height:1.5; }
+
+/* How-to-play box */
+.how-to-play {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:10px; padding:0.9rem 1.2rem;
+  max-width:460px; text-align:left; margin:0 auto 1.8rem;
+  font-size:0.82rem; color:var(--muted); line-height:1.8;
+}
+.how-to-play strong { color:var(--text); }
+
+/* ============================================================
+   SCREEN 2 — RANGE SELECTOR
+   ============================================================ */
+.page-title { font-family:'Syne',sans-serif; font-size:1.9rem; font-weight:800; margin-bottom:0.4rem; text-align:center; }
+.page-sub   { color:var(--muted); font-size:0.92rem; margin-bottom:1.8rem; text-align:center; }
+
+.range-grid { display:flex; gap:1rem; margin-bottom:1.5rem; flex-wrap:wrap; justify-content:center; }
+.range-card {
+  background:var(--surface); border:2px solid var(--border);
+  border-radius:14px; padding:1.4rem 1.8rem; text-align:center;
+  min-width:160px; position:relative; transition:all 0.2s;
+}
+/* Unlocked range — clickable */
+.range-card.unlocked { cursor:pointer; }
+.range-card.unlocked:hover { border-color:var(--accent); transform:translateY(-3px); }
+/* Selected range */
+.range-card.selected { border-color:var(--accent); background:rgba(79,158,255,0.08); }
+/* Locked range — greyed out */
+.range-card.locked  { opacity:0.4; cursor:not-allowed; }
+
+.range-nums  { font-family:'Syne',sans-serif; font-size:1.7rem; font-weight:800; color:var(--accent); }
+.range-label { font-size:0.78rem; color:var(--muted); margin-top:0.25rem; }
+.lock-icon   { position:absolute; top:8px; right:10px; font-size:1rem; }
+
+/* Small progress dots (one per level) inside range card */
+.prog-dots { display:flex; gap:5px; justify-content:center; margin-top:0.6rem; }
+.prog-dot  { width:8px; height:8px; border-radius:50%; background:var(--border); }
+.prog-dot.done { background:var(--green); }
+
+#range-hint { font-size:0.8rem; color:var(--muted); margin-bottom:1rem; text-align:center; }
+
+/* ============================================================
+   SCREEN 3 — LEVEL SELECT
+   ============================================================ */
+.level-grid { display:flex; gap:1rem; margin:1.5rem 0; flex-wrap:wrap; justify-content:center; }
+.level-card {
+  background:var(--surface); border:2px solid var(--border);
+  border-radius:14px; padding:1.5rem 2rem; text-align:center; min-width:190px;
+  transition:all 0.2s;
+}
+.level-card.available { cursor:pointer; }
+.level-card.available:hover { border-color:var(--teal); transform:translateY(-3px); }
+.level-card.locked-lv { opacity:0.4; cursor:not-allowed; }
+.lv-icon  { font-size:2rem; margin-bottom:0.3rem; }
+.lv-name  { font-weight:600; font-size:0.95rem; margin-bottom:0.25rem; }
+.lv-desc  { font-size:0.76rem; color:var(--muted); line-height:1.5; }
+.lv-lock-msg { font-size:0.72rem; color:var(--red); margin-top:0.4rem; }
+.lv-done-msg { font-size:0.72rem; color:var(--green); margin-top:0.4rem; }
+
+.diamond-bar { font-size:0.85rem; color:var(--gold); margin-top:0.5rem; }
+
+/* ============================================================
+   SCREEN 4 — GAME SCREEN
+   ============================================================ */
+#game-screen { padding:0; justify-content:flex-start; }
+
+/* Top HUD bar */
+.hud {
+  width:100%; background:var(--surface); border-bottom:1px solid var(--border);
+  padding:0.55rem 1.2rem; display:flex; align-items:center; gap:1.4rem; flex-wrap:wrap;
+}
+.hud-item { display:flex; align-items:center; gap:0.35rem; font-size:0.83rem; }
+.hud-lbl  { color:var(--muted); font-size:0.72rem; }
+.hud-val  { font-weight:600; font-size:0.95rem; }
+.hud-score   { color:var(--accent); }
+.hud-lives   { color:var(--green); }
+.hud-timer   { color:var(--orange); }
+.hud-diamond { color:var(--gold); }
+.hud-right   { margin-left:auto; }
+
+/* Canvas area */
+.canvas-wrap {
+  flex:1; width:100%; display:flex; align-items:center; justify-content:center;
+  background:#070c18; position:relative; min-height:400px;
+}
+#gameCanvas { border:1px solid var(--border); border-radius:4px; display:block; }
+
+/* Small banner that appears at bottom of canvas (element fact shown briefly) */
+.game-banner {
+  position:absolute; bottom:16px; left:50%; transform:translateX(-50%);
+  background:rgba(17,24,39,0.95); border:1px solid var(--teal);
+  border-radius:8px; padding:0.45rem 1.1rem;
+  font-size:0.82rem; color:var(--teal); pointer-events:none;
+  transition:opacity 0.4s; z-index:5; white-space:nowrap; max-width:90%;
+  overflow:hidden; text-overflow:ellipsis;
+}
+
+/* ============================================================
+   OVERLAYS  (sit on top of everything)
+   ============================================================ */
+
+/* Semi-transparent dark backdrop shared by all overlays */
+.overlay {
+  position:fixed; inset:0;
+  background:rgba(7,12,24,0.93);
+  display:flex; align-items:center; justify-content:center;
+  z-index:200; padding:1rem;
+}
+.overlay.hidden { display:none; }
+
+/* White flash when noble gas is eaten */
+.noble-flash {
+  position:fixed; inset:0;
+  background:rgba(255,255,255,0.15);
+  pointer-events:none; z-index:300;
+  animation:flashOut 0.45s ease forwards;
+}
+@keyframes flashOut { from{opacity:1} to{opacity:0} }
+
+/* Red flash on death */
+.death-flash {
+  position:fixed; inset:0;
+  background:rgba(239,68,68,0.2);
+  pointer-events:none; z-index:300;
+  animation:flashOut 0.5s ease forwards;
+}
+
+/* Shared card style used inside overlays */
+.card {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:18px; padding:2rem; max-width:480px; width:100%;
+  animation:slideUp 0.28s ease;
+}
+@keyframes slideUp { from{opacity:0;transform:translateY(18px)} to{opacity:1;transform:translateY(0)} }
+
+/* ---------- Info card (Level 1 pause) ---------- */
+.info-sym  { font-family:'Syne',sans-serif; font-size:3.8rem; font-weight:800; color:var(--accent); line-height:1; }
+.info-name { font-size:1.25rem; font-weight:600; }
+.info-anum { font-size:0.8rem; color:var(--muted); margin-top:0.15rem; margin-bottom:1rem; }
+.info-stats {
+  display:grid; grid-template-columns:1fr 1fr; gap:0.5rem; margin-bottom:1rem;
+}
+.info-stat { background:var(--bg); border-radius:8px; padding:0.55rem 0.75rem; }
+.stat-lbl  { font-size:0.68rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.8px; }
+.stat-val  { font-weight:600; font-size:0.9rem; margin-top:0.1rem; }
+.info-example {
+  background:rgba(79,158,255,0.07); border:1px solid rgba(79,158,255,0.22);
+  border-radius:10px; padding:0.85rem; margin-bottom:1.1rem;
+}
+.ex-label { font-size:0.72rem; color:var(--accent); text-transform:uppercase; letter-spacing:0.8px; margin-bottom:0.3rem; }
+.ex-text  { font-size:0.88rem; line-height:1.55; }
+.info-hint { font-size:0.76rem; color:var(--muted); text-align:center; margin-bottom:0.7rem; }
+kbd { background:#1a2235; border:1px solid var(--border); border-radius:4px; padding:1px 5px; font-family:inherit; font-size:0.76rem; }
+
+/* ---------- Quiz card ---------- */
+.quiz-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; }
+.quiz-title  { font-family:'Syne',sans-serif; font-size:1.2rem; font-weight:800; }
+.quiz-reward { color:var(--gold); font-size:0.82rem; }
+.quiz-ctx    { font-size:0.75rem; color:var(--muted); margin-bottom:0.7rem; }
+.quiz-q      { font-size:0.97rem; line-height:1.55; margin-bottom:1.1rem; }
+.quiz-opts   { display:flex; flex-direction:column; gap:0.55rem; }
+.quiz-opt {
+  background:var(--bg); border:1.5px solid var(--border); border-radius:10px;
+  padding:0.7rem 1rem; cursor:pointer; font-family:inherit; font-size:0.88rem;
+  color:var(--text); text-align:left; transition:all 0.14s;
+}
+.quiz-opt:hover  { border-color:var(--accent); background:rgba(79,158,255,0.07); }
+.quiz-opt.right  { border-color:var(--green);  background:rgba(16,185,129,0.12); color:var(--green); }
+.quiz-opt.wrong  { border-color:var(--red);    background:rgba(239,68,68,0.08);  color:var(--red); }
+.quiz-feedback   { margin-top:0.8rem; padding:0.7rem; border-radius:8px; font-size:0.85rem; line-height:1.5; }
+.quiz-feedback.win  { background:rgba(16,185,129,0.12); color:var(--green); }
+.quiz-feedback.lose { background:rgba(239,68,68,0.08);  color:var(--red); }
+.quiz-actions { display:flex; gap:0.7rem; margin-top:0.9rem; align-items:center; flex-wrap:wrap; }
+.hint-btn { font-size:0.78rem; color:var(--gold); background:none; border:1px solid var(--gold); border-radius:6px; padding:0.35rem 0.8rem; cursor:pointer; font-family:inherit; }
+.hint-btn:hover { background:rgba(245,158,11,0.1); }
+.hint-txt { font-size:0.8rem; color:var(--gold); margin-top:0.5rem; display:none; }
+
+/* ---------- Round recap / death continue card ---------- */
+.recap-title { font-family:'Syne',sans-serif; font-size:1.5rem; font-weight:800; margin-bottom:0.4rem; text-align:center; }
+.recap-sub   { color:var(--muted); font-size:0.88rem; text-align:center; margin-bottom:1.2rem; }
+.recap-elems { display:flex; flex-wrap:wrap; gap:0.4rem; justify-content:center; margin-bottom:1.3rem; }
+.recap-elem  { background:var(--bg); border:1px solid var(--border); border-radius:8px; padding:0.4rem 0.7rem; text-align:center; font-size:0.8rem; }
+.recap-elem strong { display:block; font-family:'Syne',sans-serif; font-size:1.1rem; color:var(--accent); }
+.btn-center  { display:flex; gap:0.7rem; justify-content:center; flex-wrap:wrap; }
+
+/* ---------- Summary (end of level) ---------- */
+.summary-stats { display:flex; gap:2rem; justify-content:center; margin:1.2rem 0 1.5rem; flex-wrap:wrap; }
+.s-stat-val    { font-family:'Syne',sans-serif; font-size:2.2rem; font-weight:800; color:var(--accent); }
+.s-stat-lbl    { font-size:0.78rem; color:var(--muted); }
+
+/* ---------- Mid-level quiz timer bar (Level 2) ---------- */
+.quiz-timer-bar { height:3px; background:var(--border); border-radius:2px; margin-top:0.8rem; overflow:hidden; }
+.quiz-timer-fill { height:100%; background:var(--accent); border-radius:2px; transition:width 1s linear; }
+
+/* ============================================================
+   UTILITY
+   ============================================================ */
+.hidden { display:none !important; }
+.back-btn {
+  position:absolute; top:1rem; left:1rem;
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:8px; padding:0.38rem 0.85rem;
+  font-size:0.8rem; color:var(--muted); cursor:pointer; font-family:inherit;
+}
+.back-btn:hover { color:var(--text); }
+
+@media(max-width:500px){
+  .feature-row, .range-grid, .level-grid { flex-direction:column; align-items:center; }
+  .info-stats { grid-template-columns:1fr; }
+  .summary-stats { gap:1rem; }
+}
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     SCREEN 1 — WELCOME
+     ============================================================ -->
+<div id="welcome-screen" class="screen active">
+  <div style="max-width:680px; width:100%; text-align:center;">
+
+    <div style="font-size:2.8rem; margin-bottom:0.5rem;">⚛️</div>
+    <h1 class="welcome-title">ELEMENTUM</h1>
+    <p class="welcome-sub">The Periodic Table — Gamified</p>
+    <p class="welcome-desc">
+      Learn the first 30 elements by playing a snake game.
+      Eat element orbs, read real-life facts, answer quizzes, and earn 💎 diamonds.
+    </p>
+
+    <!-- 3 feature highlights -->
+    <div class="feature-row" style="margin-top:1.8rem;">
+      <div class="feat-card">
+        <div class="feat-icon">🐍</div>
+        <div class="feat-title">Snake Game</div>
+        <div class="feat-desc">Steer your snake to eat element orbs and grow longer.</div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon">🔬</div>
+        <div class="feat-title">Real Examples</div>
+        <div class="feat-desc">Every element shows a real-world fact when you eat it.</div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon">💎</div>
+        <div class="feat-title">Earn Diamonds</div>
+        <div class="feat-desc">Answer quiz questions correctly to earn diamonds. Use them to continue or get hints.</div>
+      </div>
+    </div>
+
+    <!-- How to play instructions -->
+    <div class="how-to-play">
+      <strong>How to play:</strong><br>
+      • Use <strong>Arrow keys</strong> or <strong>WASD</strong> to move the snake<br>
+      • Eat glowing element orbs to grow and learn<br>
+      • In Level 1: game pauses after each orb — read the fact, then press <strong>Enter</strong><br>
+      • In Level 2: 90-second timer — heavier elements = bigger growth. Avoid ⚠ noble gases!<br>
+      • Complete Level 1 of a range to unlock the next range
+    </div>
+
+    <button class="btn-primary" onclick="showScreen('range-screen')">Start Playing →</button>
+  </div>
+</div>
+
+
+<!-- ============================================================
+     SCREEN 2 — RANGE SELECTOR
+     ============================================================ -->
+<div id="range-screen" class="screen" style="position:relative;">
+  <button class="back-btn" onclick="showScreen('welcome-screen')">← Back</button>
+
+  <h2 class="page-title">Choose Your Element Range</h2>
+  <p class="page-sub">Pick which elements to study. Complete Level 1 of a range to unlock the next one.</p>
+
+  <!-- Range cards are built by JavaScript -->
+  <div class="range-grid" id="rangeCards"></div>
+
+  <p id="range-hint">Click a range to select it</p>
+  <button class="btn-primary" id="rangeNextBtn" disabled onclick="goToLevelSelect()">
+    Choose Level →
+  </button>
+</div>
+
+
+<!-- ============================================================
+     SCREEN 3 — LEVEL SELECT
+     ============================================================ -->
+<div id="level-screen" class="screen" style="position:relative;">
+  <button class="back-btn" onclick="showScreen('range-screen')">← Back</button>
+
+  <h2 class="page-title" id="levelScreenTitle">Select Level</h2>
+  <p class="page-sub">Complete Level 1 before playing Level 2.</p>
+
+  <!-- Level cards are built by JavaScript -->
+  <div class="level-grid" id="levelCards"></div>
+
+  <p class="diamond-bar">💎 Your diamonds: <strong id="diamondCount">0</strong></p>
+</div>
+
+
+<!-- ============================================================
+     SCREEN 4 — GAME
+     ============================================================ -->
+<div id="game-screen" class="screen">
+
+  <!-- HUD bar across the top -->
+  <div class="hud">
+    <div class="hud-item">
+      <span class="hud-lbl">Level</span>
+      <span class="hud-val" id="hudLevel">1</span>
+    </div>
+    <div class="hud-item">
+      <span class="hud-lbl">Round</span>
+      <span class="hud-val" id="hudRound">1/3</span>
+    </div>
+    <div class="hud-item">
+      <span class="hud-lbl">Eaten</span>
+      <span class="hud-val" id="hudEaten">0</span>
+    </div>
+    <div class="hud-item">
+      <span class="hud-lbl">Score</span>
+      <span class="hud-val hud-score" id="hudScore">0</span>
+    </div>
+    <!-- Timer only shown in Level 2 -->
+    <div class="hud-item" id="timerWrap" style="display:none;">
+      <span class="hud-lbl">Time</span>
+      <span class="hud-val hud-timer" id="hudTimer">90</span>
+    </div>
+    <div class="hud-item">
+      <span class="hud-lbl">Lives</span>
+      <span class="hud-val hud-lives" id="hudLives">❤❤❤</span>
+    </div>
+    <div class="hud-item">
+      <span class="hud-lbl">💎</span>
+      <span class="hud-val hud-diamond" id="hudDiamond">0</span>
+    </div>
+    <div class="hud-right">
+      <button class="btn-secondary" style="padding:0.3rem 0.8rem;font-size:0.78rem;" onclick="togglePause()">Pause</button>
+      <button class="btn-secondary" style="padding:0.3rem 0.8rem;font-size:0.78rem;margin-left:0.4rem;" onclick="quitToMenu()">Quit</button>
+    </div>
+  </div>
+
+  <!-- Canvas area -->
+  <div class="canvas-wrap">
+    <canvas id="gameCanvas" width="560" height="560"></canvas>
+    <!-- Small message shown briefly after eating an element (Level 2) -->
+    <div class="game-banner hidden" id="gameBanner"></div>
+  </div>
+
+</div>
+
+
+<!-- ============================================================
+     OVERLAY — INFO CARD  (Level 1: shown after eating an orb)
+     ============================================================ -->
+<div class="overlay hidden" id="infoOverlay">
+  <div class="card" style="max-width:500px;">
+
+    <!-- Element symbol + name row -->
+    <div style="display:flex; gap:1.2rem; align-items:flex-start; margin-bottom:0.9rem;">
+      <div>
+        <div class="info-sym"  id="iSym">H</div>
+        <div class="info-anum" id="iAnum">Atomic No: 1</div>
+      </div>
+      <div>
+        <div class="info-name" id="iName">Hydrogen</div>
+        <div style="font-size:0.8rem; color:var(--muted); margin-top:0.15rem;" id="iMass">Mass: 1.008 u</div>
+      </div>
+    </div>
+
+    <!-- 4 small stat boxes -->
+    <div class="info-stats" id="iStats"></div>
+
+    <!-- Real-life example box -->
+    <div class="info-example">
+      <div class="ex-label">🌍 Real-Life Example</div>
+      <div class="ex-text" id="iExample"></div>
+    </div>
+
+    <p class="info-hint">Press <kbd>Enter</kbd> or click the button to continue</p>
+    <button class="btn-primary" style="width:100%;" onclick="closeInfoCard()">
+      Got it — keep going! →
+    </button>
+
+  </div>
+</div>
+
+
+<!-- ============================================================
+     OVERLAY — QUIZ  (shown after each round/level)
+     ============================================================ -->
+<div class="overlay hidden" id="quizOverlay">
+  <div class="card">
+
+    <div class="quiz-header">
+      <span class="quiz-title">⚡ Quick Quiz</span>
+      <span class="quiz-reward">Correct = +1 💎</span>
+    </div>
+
+    <!-- Shows which element this question is about -->
+    <p class="quiz-ctx" id="qCtx"></p>
+    <p class="quiz-q"   id="qQuestion"></p>
+
+    <div class="quiz-opts" id="qOpts"></div>
+
+    <!-- Hint button (costs 1 diamond) -->
+    <div class="quiz-actions">
+      <button class="hint-btn" onclick="useHint()">Use Hint (1 💎)</button>
+      <span style="font-size:0.75rem; color:var(--muted);" id="hintDiamondCount"></span>
+    </div>
+    <p class="hint-txt" id="hintText"></p>
+
+    <!-- Feedback shown after answering -->
+    <div class="quiz-feedback hidden" id="qFeedback"></div>
+
+    <!-- Timer bar for Level 2 mid-game quizzes -->
+    <div class="quiz-timer-bar hidden" id="qTimerBarWrap">
+      <div class="quiz-timer-fill" id="qTimerFill" style="width:100%;"></div>
+    </div>
+
+    <div style="margin-top:0.9rem; text-align:right;">
+      <button class="btn-secondary" style="font-size:0.82rem;" id="qNextBtn" onclick="nextQuiz()">Skip →</button>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ============================================================
+     OVERLAY — ROUND RECAP  (shown after each round in Level 1)
+     ============================================================ -->
+<div class="overlay hidden" id="recapOverlay">
+  <div class="card" style="text-align:center;">
+    <div style="font-size:2.5rem; margin-bottom:0.4rem;" id="recapEmoji">🎉</div>
+    <div class="recap-title" id="recapTitle">Round 1 Complete!</div>
+    <div class="recap-sub"   id="recapSub"></div>
+    <!-- Chips showing elements eaten this round -->
+    <div class="recap-elems" id="recapElems"></div>
+    <div class="btn-center">
+      <button class="btn-primary" id="recapBtn" onclick="closeRecap()">Continue →</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ============================================================
+     OVERLAY — DEATH / OUT OF LIVES  (offer diamond continue)
+     ============================================================ -->
+<div class="overlay hidden" id="deathOverlay">
+  <div class="card" style="text-align:center; border-color:var(--red); max-width:360px;">
+    <div style="font-size:2.5rem; margin-bottom:0.4rem;">💀</div>
+    <div class="recap-title" style="color:var(--red);">Out of Lives!</div>
+    <div class="recap-sub" id="deathSub">Your snake hit a wall.</div>
+    <div style="margin-bottom:1.2rem; font-size:0.88rem; color:var(--muted);">
+      Spend <strong style="color:var(--gold);">1 💎 diamond</strong> to respawn with 3 lives?<br>
+      You have <strong id="deathDiamondCount" style="color:var(--gold);">0</strong> diamonds.
+    </div>
+    <div class="btn-center">
+      <button class="btn-primary"   id="deathContinueBtn" onclick="continuWithDiamond()">Use 1 💎 Continue</button>
+      <button class="btn-secondary" onclick="endGameFromDeath()">End Game</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ============================================================
+     OVERLAY — LEVEL SUMMARY  (shown when level fully ends)
+     ============================================================ -->
+<div class="overlay hidden" id="summaryOverlay">
+  <div class="card" style="text-align:center; max-width:520px;">
+    <div style="font-size:2.8rem; margin-bottom:0.4rem;" id="summEmoji">🏆</div>
+    <div class="recap-title" id="summTitle">Level Complete!</div>
+    <div class="recap-sub"   id="summSub"></div>
+
+    <div class="summary-stats">
+      <div><div class="s-stat-val" id="sScore">0</div><div class="s-stat-lbl">Score</div></div>
+      <div><div class="s-stat-val" id="sElems">0</div><div class="s-stat-lbl">Elements eaten</div></div>
+      <div><div class="s-stat-val" id="sCorrect">0</div><div class="s-stat-lbl">Quiz correct</div></div>
+    </div>
+
+    <div style="color:var(--gold); font-size:1rem; margin-bottom:1.3rem;">
+      💎 Total diamonds: <strong id="sDiamonds">0</strong>
+    </div>
+
+    <!-- All unique elements eaten shown as chips -->
+    <h4 style="font-size:0.8rem; color:var(--muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:0.7rem;">Elements You Learned</h4>
+    <div class="recap-elems" id="summElems"></div>
+
+    <div class="btn-center" style="margin-top:1rem;">
+      <button class="btn-primary"   onclick="closeOverlay('summaryOverlay'); showScreen('range-screen');">Play Another Range</button>
+      <button class="btn-secondary" onclick="closeOverlay('summaryOverlay'); showScreen('welcome-screen');">Main Menu</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ============================================================
+     JAVASCRIPT — ALL GAME LOGIC
+     ============================================================ -->
+<script>
+
+// ================================================================
+// SECTION 1 — ELEMENT DATA
+// Each element has: z (atomic number), sym, name, mass, radius,
+// group, example (real-life fact), and fact (extra trivia).
+// ================================================================
+const ELEMENTS = [
+  { z:1,  sym:'H',  name:'Hydrogen',   mass:1.008,  radius:53,  group:'Nonmetal',
+    example:'Water (H₂O) is the most vital hydrogen compound — life on Earth depends on it. Hydrogen also powers the Sun through nuclear fusion.',
+    fact:'Hydrogen makes up 75% of all visible matter in the universe.' },
+
+  { z:2,  sym:'He', name:'Helium',     mass:4.003,  radius:31,  group:'Noble Gas',
+    example:'Fills party balloons and makes your voice squeaky! Hospitals use liquid helium to keep MRI machines cold.',
+    fact:'Helium was discovered on the Sun before it was found on Earth.' },
+
+  { z:3,  sym:'Li', name:'Lithium',    mass:6.941,  radius:167, group:'Alkali Metal',
+    example:'Your smartphone and laptop battery runs on lithium-ion technology. It also treats bipolar disorder in medicine.',
+    fact:'Lithium is so light it floats on water — yet reacts violently with it.' },
+
+  { z:4,  sym:'Be', name:'Beryllium',  mass:9.012,  radius:112, group:'Alkaline Earth',
+    example:'Used in X-ray machine windows and spacecraft parts because it is both very light and very strong.',
+    fact:'Beryllium dust is toxic — inhaling it can cause a serious lung disease.' },
+
+  { z:5,  sym:'B',  name:'Boron',      mass:10.811, radius:87,  group:'Metalloid',
+    example:'Borax (a boron compound) is a common household cleaner. Borosilicate glass (like Pyrex cookware) uses boron to resist heat.',
+    fact:'Boron is essential for plant growth — farmers add it to fertilizer.' },
+
+  { z:6,  sym:'C',  name:'Carbon',     mass:12.011, radius:77,  group:'Nonmetal',
+    example:'All life on Earth is carbon-based. Diamonds and pencil graphite are both pure carbon — just arranged differently.',
+    fact:'Carbon dating can determine the age of ancient objects up to 50,000 years old.' },
+
+  { z:7,  sym:'N',  name:'Nitrogen',   mass:14.007, radius:75,  group:'Nonmetal',
+    example:'78% of the air you breathe is nitrogen. Liquid nitrogen is used to freeze food and preserve biological samples.',
+    fact:'Your DNA and proteins contain nitrogen — it is literally the molecule of life.' },
+
+  { z:8,  sym:'O',  name:'Oxygen',     mass:15.999, radius:73,  group:'Nonmetal',
+    example:'You need oxygen to breathe and stay alive. It also makes fire possible — nothing burns without it.',
+    fact:'Early photosynthetic bacteria produced oxygen and completely changed Earth\'s atmosphere 2.5 billion years ago.' },
+
+  { z:9,  sym:'F',  name:'Fluorine',   mass:18.998, radius:64,  group:'Halogen',
+    example:'Toothpaste contains fluoride (a fluorine compound) to protect teeth from cavities. Teflon non-stick pans also use fluorine chemistry.',
+    fact:'Fluorine is the most reactive element on the periodic table — it attacks almost everything.' },
+
+  { z:10, sym:'Ne', name:'Neon',       mass:20.180, radius:38,  group:'Noble Gas',
+    example:'Neon gives the classic red-orange glow in neon signs. It is also used in lasers and plasma screens.',
+    fact:'Neon is 40 times more abundant in the universe than on Earth — it escapes our atmosphere.' },
+
+  { z:11, sym:'Na', name:'Sodium',     mass:22.990, radius:186, group:'Alkali Metal',
+    example:'Table salt is sodium chloride (NaCl). Your nerves and muscles use sodium ions to send electrical signals.',
+    fact:'Pure sodium metal explodes when dropped in water — yet in your food it is perfectly safe.' },
+
+  { z:12, sym:'Mg', name:'Magnesium',  mass:24.305, radius:160, group:'Alkaline Earth',
+    example:'Magnesium sits at the center of every chlorophyll molecule, enabling photosynthesis in all plants.',
+    fact:'Burning magnesium produces a blinding white light — early photographers used it as a flashbulb.' },
+
+  { z:13, sym:'Al', name:'Aluminium',  mass:26.982, radius:143, group:'Post-Transition Metal',
+    example:'Soda cans, kitchen foil, and aircraft frames are aluminium. It is the most abundant metal in Earth\'s crust.',
+    fact:'Before industrial production, aluminium was more valuable than gold. Napoleon used aluminium cutlery for his most honored guests.' },
+
+  { z:14, sym:'Si', name:'Silicon',    mass:28.086, radius:117, group:'Metalloid',
+    example:'Computer chips and solar panels are made from silicon. Sand is mostly silicon dioxide — that is why the tech hub is called Silicon Valley.',
+    fact:'A fingernail-sized silicon chip can hold billions of transistors.' },
+
+  { z:15, sym:'P',  name:'Phosphorus', mass:30.974, radius:115, group:'Nonmetal',
+    example:'Your DNA, bones, and ATP (the energy molecule of life) all contain phosphorus. Fertilizers use it to help crops grow.',
+    fact:'White phosphorus glows in the dark — historically called cold fire.' },
+
+  { z:16, sym:'S',  name:'Sulfur',     mass:32.065, radius:103, group:'Nonmetal',
+    example:'The smell of rotten eggs is hydrogen sulfide. Sulfuric acid is the world\'s most widely produced industrial chemical.',
+    fact:'Your body contains about 140 grams of sulfur — it is in the amino acids that build your proteins.' },
+
+  { z:17, sym:'Cl', name:'Chlorine',   mass:35.453, radius:99,  group:'Halogen',
+    example:'Chlorine keeps swimming pools safe by killing bacteria. Table salt (NaCl) is half chlorine by weight.',
+    fact:'Chlorine was used as a chemical weapon in World War I — today it saves millions of lives by purifying drinking water.' },
+
+  { z:18, sym:'Ar', name:'Argon',      mass:39.948, radius:71,  group:'Noble Gas',
+    example:'Argon fills the gap in double-glazed windows for insulation. Welders use argon to shield hot metal from oxygen.',
+    fact:'Argon is nearly 1% of Earth\'s atmosphere — the third most abundant gas in the air you breathe.' },
+
+  { z:19, sym:'K',  name:'Potassium',  mass:39.098, radius:227, group:'Alkali Metal',
+    example:'Bananas are famous for potassium! Your heart and muscles need it — potassium ions trigger every heartbeat.',
+    fact:'Potassium\'s symbol K comes from Kalium, its Latin name. It was first isolated by burning potash.' },
+
+  { z:20, sym:'Ca', name:'Calcium',    mass:40.078, radius:197, group:'Alkaline Earth',
+    example:'Your bones and teeth are mostly calcium phosphate. Milk is rich in calcium. Limestone and marble are both calcium carbonate.',
+    fact:'Your body contains about 1 kg of calcium — 99% of it locked in your skeleton.' },
+
+  { z:21, sym:'Sc', name:'Scandium',   mass:44.956, radius:162, group:'Transition Metal',
+    example:'Aluminium-scandium alloys make lightweight sports equipment — bicycle frames, baseball bats, and lacrosse sticks.',
+    fact:'Despite being fairly abundant in Earth\'s crust, scandium is rarely found in concentrated deposits.' },
+
+  { z:22, sym:'Ti', name:'Titanium',   mass:47.867, radius:147, group:'Transition Metal',
+    example:'Surgical implants, aircraft frames, and high-end watch cases use titanium because it is strong, light, and body-safe.',
+    fact:'Titanium is as strong as steel but 45% lighter.' },
+
+  { z:23, sym:'V',  name:'Vanadium',   mass:50.942, radius:134, group:'Transition Metal',
+    example:'Added to steel to make tools and car parts harder. Vanadium redox batteries are being researched for large-scale energy storage.',
+    fact:'Vanadium was discovered, forgotten, and rediscovered — named after Vanadis, a Norse goddess of beauty.' },
+
+  { z:24, sym:'Cr', name:'Chromium',   mass:51.996, radius:128, group:'Transition Metal',
+    example:'Chromium makes stainless steel rust-proof. Chrome plating gives car parts that shiny mirror finish. Rubies get their red from chromium.',
+    fact:'The word chrome comes from the Greek word for colour, because chromium compounds are brilliantly coloured.' },
+
+  { z:25, sym:'Mn', name:'Manganese',  mass:54.938, radius:127, group:'Transition Metal',
+    example:'Essential in steel production. Also important for bone health and brain function in the human body.',
+    fact:'Ancient Egyptian and Roman glassmakers used manganese to remove colour from glass — making it clear.' },
+
+  { z:26, sym:'Fe', name:'Iron',       mass:55.845, radius:126, group:'Transition Metal',
+    example:'Haemoglobin in your blood uses iron to carry oxygen. Steel (mostly iron) is the most used metal in construction worldwide.',
+    fact:'Earth\'s inner core is a solid ball of iron and nickel roughly the size of the Moon.' },
+
+  { z:27, sym:'Co', name:'Cobalt',     mass:58.933, radius:125, group:'Transition Metal',
+    example:'Cobalt gives ancient glass and pottery their deep blue colour. It is a key component in lithium-cobalt batteries.',
+    fact:'Vitamin B12 — essential for your nervous system — is the only vitamin that contains a metal atom: cobalt.' },
+
+  { z:28, sym:'Ni', name:'Nickel',     mass:58.693, radius:124, group:'Transition Metal',
+    example:'US five-cent coins (called nickels), stainless steel, and rechargeable batteries all use nickel.',
+    fact:'Earth\'s core is thought to contain large amounts of nickel — nickel-iron meteorites regularly fall to Earth.' },
+
+  { z:29, sym:'Cu', name:'Copper',     mass:63.546, radius:128, group:'Transition Metal',
+    example:'Electrical wiring in every building is copper. It is also naturally antimicrobial — hospital door handles are often copper.',
+    fact:'Copper was the first metal worked by humans — the Bronze Age was made possible by copper alloys.' },
+
+  { z:30, sym:'Zn', name:'Zinc',       mass:65.38,  radius:122, group:'Transition Metal',
+    example:'Zinc galvanises steel to prevent rust. It is in sunscreen to block UV rays, and your immune system needs it to fight infections.',
+    fact:'Zinc is the 24th most abundant element in Earth\'s crust and the fourth most commonly used metal.' }
+];
+
+
+// ================================================================
+// SECTION 2 — SAVED PROGRESS  (stored in browser localStorage)
+// localStorage works like a simple save file in the browser.
+// ================================================================
+
+// Load saved data, or use defaults if nothing saved yet
+let diamonds = parseInt(localStorage.getItem('el_diamonds') || '0');
+let progress  = JSON.parse(localStorage.getItem('el_progress')  || '{}');
+
+// Save current data to browser storage
+function saveProgress() {
+  localStorage.setItem('el_diamonds', diamonds);
+  localStorage.setItem('el_progress', JSON.stringify(progress));
+}
+
+// Check if a level is completed for a given range start (1, 11, or 21)
+function isLevelDone(rangeStart, level) {
+  return !!progress[rangeStart + '_L' + level];
+}
+
+// Mark a level as completed
+function markLevelDone(rangeStart, level) {
+  progress[rangeStart + '_L' + level] = true;
+  saveProgress();
+}
+
+// Return elements for a given range start (e.g. start=1 → elements 1–10)
+function getRangeElements(start) {
+  return ELEMENTS.filter(e => e.z >= start && e.z < start + 10);
+}
+
+
+// ================================================================
+// SECTION 3 — SCREEN NAVIGATION
+// ================================================================
+let selectedRange = null;   // which range the player has chosen (1, 11, or 21)
+let currentLevel  = 1;      // which level is being played
+
+function showScreen(id) {
+  // Hide all screens, show the requested one
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+
+  // Rebuild the range/level screens fresh each time we navigate to them
+  if (id === 'range-screen') buildRangeCards();
+  if (id === 'level-screen') buildLevelCards();
+  if (id === 'level-screen') document.getElementById('diamondCount').textContent = diamonds;
+}
+
+// Called when player clicks "Choose Level →" on range screen
+function goToLevelSelect() {
+  if (!selectedRange) return;
+  showScreen('level-screen');
+}
+
+
+// ================================================================
+// SECTION 4 — RANGE CARDS  (built dynamically)
+// ================================================================
+const RANGES = [
+  { start: 1,  label: '1 – 10'  },
+  { start: 11, label: '11 – 20' },
+  { start: 21, label: '21 – 30' }
+];
+
+function buildRangeCards() {
+  const wrap = document.getElementById('rangeCards');
+  wrap.innerHTML = '';
+
+  RANGES.forEach((r, i) => {
+    // A range is unlocked if it's the first one,
+    // or if the previous range's Level 1 is done
+    const unlocked = (i === 0) || isLevelDone(RANGES[i - 1].start, 1);
+    const isSelected = selectedRange === r.start;
+
+    // How many levels done for this range (for the progress dots)
+    const doneCount = [1, 2].filter(lv => isLevelDone(r.start, lv));
+
+    const card = document.createElement('div');
+    card.className = 'range-card ' + (unlocked ? 'unlocked' : 'locked') + (isSelected ? ' selected' : '');
+    card.innerHTML = `
+      ${!unlocked ? '<span class="lock-icon">🔒</span>' : ''}
+      <div class="range-nums">${r.label}</div>
+      <div class="range-label">Elements ${r.label}</div>
+      <div class="prog-dots">
+        ${[1, 2].map(lv => `<div class="prog-dot ${doneCount.includes(lv) ? 'done' : ''}"></div>`).join('')}
+      </div>
+      <div style="font-size:0.7rem;color:var(--muted);margin-top:0.3rem;">${doneCount.length}/2 done</div>
+    `;
+
+    // Only make it clickable if unlocked
+    if (unlocked) {
+      card.onclick = () => {
+        selectedRange = r.start;
+        buildRangeCards();  // rebuild to show selection
+        document.getElementById('range-hint').textContent = 'Selected: Elements ' + r.label;
+        // Enable the "Choose Level" button
+        const btn = document.getElementById('rangeNextBtn');
+        btn.disabled = false;
+      };
+    }
+
+    wrap.appendChild(card);
+  });
+}
+
+
+// ================================================================
+// SECTION 5 — LEVEL CARDS  (built dynamically)
+// ================================================================
+function buildLevelCards() {
+  const wrap = document.getElementById('levelCards');
+  wrap.innerHTML = '';
+
+  const r = selectedRange;
+  document.getElementById('levelScreenTitle').textContent =
+    'Range ' + r + '–' + (r + 9) + ' — Choose Level';
+
+  const levels = [
+    { n: 1, icon: '🌱', name: 'Level 1 — First Contact',
+      desc: '3 rounds. Eat orbs, read element facts. No timer. Great for beginners.' },
+    { n: 2, icon: '⚖️', name: 'Level 2 — Mass Matters',
+      desc: '90-second timer. Heavier elements grow you faster. Avoid noble gases!' }
+  ];
+
+  levels.forEach(lv => {
+    // Level 2 requires Level 1 of the same range to be done
+    const prereqMet = (lv.n === 1) || isLevelDone(r, lv.n - 1);
+    const done = isLevelDone(r, lv.n);
+
+    const card = document.createElement('div');
+    card.className = 'level-card ' + (prereqMet ? 'available' : 'locked-lv');
+    card.innerHTML = `
+      <div class="lv-icon" style="color:${done ? 'var(--green)' : prereqMet ? 'var(--accent)' : 'var(--muted)'}">
+        ${done ? '✅' : lv.icon}
+      </div>
+      <div class="lv-name">${lv.name}</div>
+      <div class="lv-desc">${lv.desc}</div>
+      ${done ? '<div class="lv-done-msg">✓ Completed!</div>' : ''}
+      ${!prereqMet ? '<div class="lv-lock-msg">🔒 Complete Level 1 first</div>' : ''}
+    `;
+
+    if (prereqMet) {
+      card.onclick = () => startGame(lv.n);
+    }
+
+    wrap.appendChild(card);
+  });
+}
+
+
+// ================================================================
+// SECTION 6 — GAME STATE VARIABLES
+// These track everything happening during a game session.
+// ================================================================
+// Snake: an array of {x, y} grid cells. First item = head.
+let snake    = [];
+let dir      = { x: 1, y: 0 };   // current direction
+let nextDir  = { x: 1, y: 0 };   // direction on next tick
+
+// Orbs on the canvas: array of { x, y, el, isNoble }
+let orbs = [];
+
+// Level progress counters
+let roundNum      = 1;   // current round (Level 1: 1, 2, or 3)
+let roundEaten    = 0;   // how many eaten this round
+let totalEaten    = 0;   // total eaten this level
+let score         = 0;
+let lives         = 3;
+let quizCorrect   = 0;
+
+// Timing
+let gameLoopId    = null;   // setInterval ID for the main game loop
+let timerSecs     = 90;     // countdown timer for Level 2
+let timerIntervalId = null;
+let nobleTimerId  = null;   // schedules noble gas spawns
+
+// Flags
+let paused        = false;
+let waitingForInfoCard = false;  // true while Level 1 info card is open
+let gameEnded     = false;
+
+// Which elements have been eaten this level (for recap + quiz)
+let eatenThisLevel = [];
+let eatenThisRound = [];
+
+// How many orbs to eat per round in Level 1
+const ROUND_TARGETS = [3, 5, 7];
+
+// Canvas grid settings
+const CELL = 20;    // pixels per grid cell
+const COLS = 28;    // number of columns
+const ROWS = 28;    // number of rows
+
+
+// ================================================================
+// SECTION 7 — STARTING A GAME
+// ================================================================
+function startGame(level) {
+  currentLevel = level;
+
+  // Reset all state variables
+  score       = 0;
+  lives       = 3;
+  quizCorrect = 0;
+  roundNum    = 1;
+  roundEaten  = 0;
+  totalEaten  = 0;
+  paused      = false;
+  waitingForInfoCard = false;
+  gameEnded   = false;
+  eatenThisLevel = [];
+  eatenThisRound = [];
+
+  // Close any open overlays
+  ['infoOverlay','quizOverlay','recapOverlay','deathOverlay','summaryOverlay'].forEach(closeOverlay);
+
+  // Show game screen
+  showScreen('game-screen');
+
+  // Show timer HUD only in Level 2
+  document.getElementById('timerWrap').style.display = (level === 2) ? 'flex' : 'none';
+
+  // Place snake at centre of grid
+  resetSnake();
+
+  // Spawn 3 element orbs
+  orbs = [];
+  spawnOrbs(3);
+
+  // Update the display
+  updateHUD();
+
+  // Keyboard controls
+  document.addEventListener('keydown', handleKey);
+
+  // Start game loop (tick speed depends on level)
+  startGameLoop();
+
+  // Level 2 extras: countdown timer + noble gas spawner
+  if (level === 2) {
+    timerSecs = 90;
+    updateHUD();
+    timerIntervalId = setInterval(tickTimer, 1000);
+    // Noble gas spawns every 20 seconds
+    nobleTimerId = setInterval(spawnNobleGas, 20000);
+  }
+}
+
+// Place snake at centre facing right, length 3
+function resetSnake() {
+  snake = [
+    { x: 14, y: 14 },
+    { x: 13, y: 14 },
+    { x: 12, y: 14 }
+  ];
+  dir     = { x: 1, y: 0 };
+  nextDir = { x: 1, y: 0 };
+}
+
+// ================================================================
+// SECTION 8 — GAME LOOP
+// ================================================================
+
+// How fast the snake moves (ms per tick).
+// Lower = faster. Decreases slightly as player eats more.
+function getSpeed() {
+  const base = (currentLevel === 1) ? 160 : 130;
+  // Gets 3ms faster per element eaten, minimum 70ms
+  return Math.max(70, base - totalEaten * 3);
+}
+
+function startGameLoop() {
+  if (gameLoopId) clearInterval(gameLoopId);
+  gameLoopId = setInterval(gameTick, getSpeed());
+}
+
+// Main game tick — called repeatedly
+function gameTick() {
+  if (paused || waitingForInfoCard || gameEnded) return;
+
+  // Apply the queued direction
+  dir = { ...nextDir };
+
+  // Calculate new head position
+  const head = { x: snake[0].x + dir.x, y: snake[0].y + dir.y };
+
+  // ---- Check wall collision ----
+  if (head.x < 0 || head.x >= COLS || head.y < 0 || head.y >= ROWS) {
+    handleDeath('Your snake hit the wall!');
+    return;
+  }
+
+  // ---- Check self collision ----
+  if (snake.some(seg => seg.x === head.x && seg.y === head.y)) {
+    handleDeath('Your snake bit itself!');
+    return;
+  }
+
+  // Move snake: add new head
+  snake.unshift(head);
+
+  // ---- Check orb collision ----
+  const orbIdx = orbs.findIndex(o => o.x === head.x && o.y === head.y);
+  if (orbIdx !== -1) {
+    const orb = orbs[orbIdx];
+    orbs.splice(orbIdx, 1);   // remove eaten orb
+
+    if (orb.isNoble) {
+      // Noble gas: shrink snake and flash white
+      handleNobleGas();
+    } else {
+      eatElement(orb.el);
+    }
+  } else {
+    // No orb eaten: remove tail so snake stays same length
+    snake.pop();
+  }
+
+  drawCanvas();
+}
+
+// ================================================================
+// SECTION 9 — EATING AN ELEMENT
+// ================================================================
+function eatElement(el) {
+  // How many segments to grow
+  let growBy = 1;
+  if (currentLevel === 2) {
+    growBy = Math.max(1, Math.floor(el.mass / 10));
+  }
+
+  // Add segments at tail
+  for (let i = 0; i < growBy; i++) {
+    snake.push({ ...snake[snake.length - 1] });
+  }
+
+  // Update counters
+  score += el.z * 10;
+  totalEaten++;
+  roundEaten++;
+  eatenThisLevel.push(el);
+  eatenThisRound.push(el);
+
+  updateHUD();
+  spawnOrbs(1);  // replace the eaten orb
+
+  // Restart loop at new (possibly faster) speed
+  startGameLoop();
+
+  if (currentLevel === 1) {
+    // Pause and show the info card
+    waitingForInfoCard = true;
+    showInfoCard(el);
+  } else {
+    // Level 2: show a brief banner (no pause)
+    showBanner(el.sym + ' — ' + el.example.split('.')[0] + '.');
+    // Check if round is over (Level 2 is a single long round — no round limits)
+  }
+}
+
+// ================================================================
+// SECTION 10 — LEVEL 1 INFO CARD
+// ================================================================
+function showInfoCard(el) {
+  document.getElementById('iSym').textContent  = el.sym;
+  document.getElementById('iName').textContent = el.name;
+  document.getElementById('iAnum').textContent = 'Atomic No: ' + el.z;
+  document.getElementById('iMass').textContent = 'Mass: ' + el.mass + ' u';
+
+  // 4 stat boxes
+  document.getElementById('iStats').innerHTML = `
+    <div class="info-stat">
+      <div class="stat-lbl">Group</div>
+      <div class="stat-val">${el.group}</div>
+    </div>
+    <div class="info-stat">
+      <div class="stat-lbl">Atomic Radius</div>
+      <div class="stat-val">${el.radius} pm</div>
+    </div>
+    <div class="info-stat">
+      <div class="stat-lbl">Atomic Mass</div>
+      <div class="stat-val">${el.mass} u</div>
+    </div>
+    <div class="info-stat">
+      <div class="stat-lbl">Atomic Number</div>
+      <div class="stat-val">${el.z}</div>
+    </div>
+  `;
+
+  document.getElementById('iExample').textContent = el.example;
+
+  openOverlay('infoOverlay');
+}
+
+function closeInfoCard() {
+  closeOverlay('infoOverlay');
+  waitingForInfoCard = false;
+
+  // Check if this round is complete
+  const target = ROUND_TARGETS[roundNum - 1];
+  if (roundEaten >= target) {
+    endRound();
+  }
+  // Otherwise game just continues
+}
+
+// ================================================================
+// SECTION 11 — LEVEL 1 ROUND SYSTEM
+// ================================================================
+function endRound() {
+  clearInterval(gameLoopId);
+  paused = true;
+
+  // Build recap overlay content
+  document.getElementById('recapEmoji').textContent = roundNum < 3 ? '🎉' : '🏁';
+  document.getElementById('recapTitle').textContent =
+    roundNum < 3 ? 'Round ' + roundNum + ' Complete!' : 'All Rounds Done!';
+  document.getElementById('recapSub').textContent =
+    'You ate ' + roundEaten + ' elements this round.';
+
+  // Show chips for elements eaten this round
+  const uniqueRound = [...new Map(eatenThisRound.map(e => [e.z, e])).values()];
+  document.getElementById('recapElems').innerHTML =
+    uniqueRound.map(e => `<div class="recap-elem"><strong>${e.sym}</strong>${e.name}</div>`).join('');
+
+  document.getElementById('recapBtn').textContent =
+    roundNum < 3 ? 'Start Round ' + (roundNum + 1) + ' →' : 'See Quiz →';
+
+  openOverlay('recapOverlay');
+}
+
+function closeRecap() {
+  closeOverlay('recapOverlay');
+
+  if (roundNum < 3) {
+    // Move to next round
+    roundNum++;
+    roundEaten = 0;
+    eatenThisRound = [];
+    updateHUD();
+    paused = false;
+    startGameLoop();
+  } else {
+    // All 3 rounds done — show quiz then summary
+    startQuizSession(eatenThisLevel, 3, () => finishLevel());
+  }
+}
+
+// ================================================================
+// SECTION 12 — NOBLE GAS (Level 2)
+// ================================================================
+function spawnNobleGas() {
+  if (gameEnded) return;
+  const rangeEls = getRangeElements(selectedRange);
+  const nobles   = rangeEls.filter(e => e.group === 'Noble Gas');
+  if (nobles.length === 0) return;
+
+  const el  = nobles[Math.floor(Math.random() * nobles.length)];
+  const pos = randomFreeCell();
+  orbs.push({ x: pos.x, y: pos.y, el, isNoble: true });
+}
+
+function handleNobleGas() {
+  // Shrink snake by 3 segments (but keep at least 1)
+  snake.splice(Math.max(1, snake.length - 3));
+  // White flash effect
+  const flash = document.createElement('div');
+  flash.className = 'noble-flash';
+  document.body.appendChild(flash);
+  setTimeout(() => flash.remove(), 500);
+  showBanner('⚠ Noble gas! Snake shrunk!');
+}
+
+// ================================================================
+// SECTION 13 — COUNTDOWN TIMER (Level 2)
+// ================================================================
+function tickTimer() {
+  if (paused || gameEnded) return;
+  timerSecs--;
+  updateHUD();
+  if (timerSecs <= 0) {
+    clearInterval(timerIntervalId);
+    clearInterval(nobleTimerId);
+    finishLevel();
+  }
+}
+
+// ================================================================
+// SECTION 14 — DEATH HANDLING
+// ================================================================
+function handleDeath(reason) {
+  lives--;
+  updateHUD();
+
+  // Red flash
+  const flash = document.createElement('div');
+  flash.className = 'death-flash';
+  document.body.appendChild(flash);
+  setTimeout(() => flash.remove(), 600);
+
+  if (lives > 0) {
+    // Respawn at opposite corner with same direction
+    const cx = snake[0].x < COLS / 2 ? COLS - 4 : 3;
+    const cy = snake[0].y < ROWS / 2 ? ROWS - 4 : 3;
+    snake = [{ x: cx, y: cy }, { x: cx - 1, y: cy }, { x: cx - 2, y: cy }];
+    dir = nextDir = { x: 1, y: 0 };
+  } else {
+    // No lives left
+    clearInterval(gameLoopId);
+    clearInterval(timerIntervalId);
+    clearInterval(nobleTimerId);
+    paused = true;
+
+    document.getElementById('deathSub').textContent         = reason;
+    document.getElementById('deathDiamondCount').textContent = diamonds;
+    document.getElementById('deathContinueBtn').disabled    = (diamonds < 1);
+    openOverlay('deathOverlay');
+  }
+}
+
+// Player spends 1 diamond to continue
+function continuWithDiamond() {
+  diamonds--;
+  saveProgress();
+  lives = 3;
+  updateHUD();
+  closeOverlay('deathOverlay');
+  paused = false;
+
+  // Reset snake position
+  resetSnake();
+  startGameLoop();
+
+  // Restart timer if Level 2
+  if (currentLevel === 2 && timerSecs > 0) {
+    clearInterval(timerIntervalId);
+    timerIntervalId = setInterval(tickTimer, 1000);
+  }
+}
+
+// Player chooses to end the game (no diamond)
+function endGameFromDeath() {
+  gameEnded = true;
+  closeOverlay('deathOverlay');
+  finishLevel();
+}
+
+// ================================================================
+// SECTION 15 — FINISHING A LEVEL
+// ================================================================
+function finishLevel() {
+  gameEnded = true;
+  clearInterval(gameLoopId);
+  clearInterval(timerIntervalId);
+  clearInterval(nobleTimerId);
+  document.removeEventListener('keydown', handleKey);
+
+  // Mark level as completed in saved progress
+  markLevelDone(selectedRange, currentLevel);
+
+  // Show quiz (3 questions) then the summary screen
+  startQuizSession(eatenThisLevel, 3, () => showSummary());
+}
+
+function showSummary() {
+  const unique = [...new Map(eatenThisLevel.map(e => [e.z, e])).values()];
+
+  document.getElementById('summEmoji').textContent   = '🏆';
+  document.getElementById('summTitle').textContent   = 'Level ' + currentLevel + ' Complete!';
+  document.getElementById('summSub').textContent     =
+    'Range ' + selectedRange + '–' + (selectedRange + 9) + ' — well done!';
+  document.getElementById('sScore').textContent      = score;
+  document.getElementById('sElems').textContent      = eatenThisLevel.length;
+  document.getElementById('sCorrect').textContent    = quizCorrect;
+  document.getElementById('sDiamonds').textContent   = diamonds;
+
+  document.getElementById('summElems').innerHTML =
+    unique.map(e => `<div class="recap-elem"><strong>${e.sym}</strong>${e.name}</div>`).join('');
+
+  closeOverlay('quizOverlay');
+  openOverlay('summaryOverlay');
+}
+
+// Clean up when quitting mid-game
+function quitToMenu() {
+  gameEnded = true;
+  clearInterval(gameLoopId);
+  clearInterval(timerIntervalId);
+  clearInterval(nobleTimerId);
+  document.removeEventListener('keydown', handleKey);
+  showScreen('welcome-screen');
+}
+
+
+// ================================================================
+// SECTION 16 — QUIZ SYSTEM
+// ================================================================
+// quizQueue holds the questions to ask this session.
+// quizCallback is called when all questions are answered/skipped.
+let quizQueue    = [];
+let quizCallback = null;
+let quizIndex    = 0;
+let quizTimerId  = null;  // for the 10-second timer in Level 2 mid-game quizzes
+
+// Build quiz questions from elements the player has eaten.
+// Returns an array of question objects.
+function buildQuizQuestions(elements) {
+  const qs = [];
+  const unique = [...new Map(elements.map(e => [e.z, e])).values()];
+
+  unique.forEach(el => {
+    // Question 1: What is the atomic number?
+    const wrongNums = [el.z + 1, el.z + 2, el.z + 3].filter(n => n !== el.z && n > 0);
+    qs.push({
+      ctx:     'About ' + el.name + ' (' + el.sym + ')',
+      q:       'What is the atomic number of ' + el.name + '?',
+      options: shuffle([el.z, ...wrongNums.slice(0, 3)]),
+      answer:  el.z,
+      hint:    'The atomic number tells you how many protons are in the nucleus.'
+    });
+
+    // Question 2: What is the symbol?
+    const otherSyms = ELEMENTS.filter(e => e.sym !== el.sym).slice(0, 3).map(e => e.sym);
+    qs.push({
+      ctx:     'Element symbol',
+      q:       'What is the chemical symbol for ' + el.name + '?',
+      options: shuffle([el.sym, ...otherSyms]),
+      answer:  el.sym,
+      hint:    'It is usually 1 or 2 letters, often from the Latin name.'
+    });
+
+    // Question 3: Which group does it belong to?
+    const otherGroups = [...new Set(ELEMENTS.filter(e => e.group !== el.group).map(e => e.group))].slice(0, 3);
+    qs.push({
+      ctx:     'Element groups',
+      q:       'Which group does ' + el.name + ' belong to?',
+      options: shuffle([el.group, ...otherGroups]),
+      answer:  el.group,
+      hint:    'Think about the real-life example you read — does it sound reactive or inert?'
+    });
+  });
+
+  return shuffle(qs);
+}
+
+// Start a quiz session. Takes elements array, number of questions, and a callback.
+function startQuizSession(elements, numQs, callback) {
+  if (elements.length === 0) { callback(); return; }
+
+  quizCallback = callback;
+  quizQueue    = buildQuizQuestions(elements).slice(0, numQs);
+  quizIndex    = 0;
+
+  if (quizQueue.length === 0) { callback(); return; }
+
+  showNextQuizQuestion();
+}
+
+function showNextQuizQuestion() {
+  if (quizIndex >= quizQueue.length) {
+    closeOverlay('quizOverlay');
+    if (quizCallback) { const cb = quizCallback; quizCallback = null; cb(); }
+    return;
+  }
+
+  const q = quizQueue[quizIndex];
+
+  document.getElementById('qCtx').textContent      = q.ctx;
+  document.getElementById('qQuestion').textContent = q.q;
+  document.getElementById('qFeedback').classList.add('hidden');
+  document.getElementById('hintText').style.display = 'none';
+  document.getElementById('hintDiamondCount').textContent = '(You have ' + diamonds + ' 💎)';
+  document.getElementById('qNextBtn').textContent  =
+    quizIndex < quizQueue.length - 1 ? 'Skip →' : 'Finish →';
+
+  // Render answer buttons
+  const optsDiv = document.getElementById('qOpts');
+  optsDiv.innerHTML = '';
+  q.options.forEach(opt => {
+    const btn = document.createElement('button');
+    btn.className   = 'quiz-opt';
+    btn.textContent = String(opt);
+    btn.onclick = () => answerQuiz(opt, q.answer, btn);
+    optsDiv.appendChild(btn);
+  });
+
+  // Store current hint for the hint button
+  document.getElementById('hintText').textContent = q.hint;
+
+  openOverlay('quizOverlay');
+}
+
+// Player picks an answer
+function answerQuiz(chosen, correct, clickedBtn) {
+  // Disable all buttons so they cannot click again
+  document.querySelectorAll('.quiz-opt').forEach(b => b.onclick = null);
+
+  const isRight = String(chosen) === String(correct);
+
+  // Colour the clicked button
+  clickedBtn.classList.add(isRight ? 'right' : 'wrong');
+
+  // If wrong, highlight the correct answer in green
+  if (!isRight) {
+    document.querySelectorAll('.quiz-opt').forEach(b => {
+      if (b.textContent === String(correct)) b.classList.add('right');
+    });
+  }
+
+  // Feedback message
+  const fb = document.getElementById('qFeedback');
+  if (isRight) {
+    diamonds++;
+    quizCorrect++;
+    saveProgress();
+    updateHUD();
+    fb.className   = 'quiz-feedback win';
+    fb.textContent = '✓ Correct! You earned 1 💎';
+  } else {
+    fb.className   = 'quiz-feedback lose';
+    fb.textContent = '✗ The correct answer was: ' + correct;
+  }
+  fb.classList.remove('hidden');
+  document.getElementById('qNextBtn').textContent = quizIndex < quizQueue.length - 1 ? 'Next →' : 'Finish →';
+}
+
+// Player clicks Skip / Next / Finish
+function nextQuiz() {
+  quizIndex++;
+  showNextQuizQuestion();
+}
+
+// Player uses a hint (costs 1 diamond)
+function useHint() {
+  if (diamonds < 1) {
+    document.getElementById('hintText').textContent = 'You need at least 1 💎 for a hint!';
+    document.getElementById('hintText').style.display = 'block';
+    return;
+  }
+  diamonds--;
+  saveProgress();
+  updateHUD();
+  document.getElementById('hintDiamondCount').textContent = '(You have ' + diamonds + ' 💎)';
+  document.getElementById('hintText').style.display = 'block';
+}
+
+
+// ================================================================
+// SECTION 17 — ORB SPAWNING
+// ================================================================
+function spawnOrbs(count) {
+  const rangeEls = getRangeElements(selectedRange);
+  const nonNoble = rangeEls.filter(e => e.group !== 'Noble Gas');
+
+  for (let i = 0; i < count; i++) {
+    // Keep total orbs on screen at most 5
+    if (orbs.length >= 5) break;
+    const el  = nonNoble[Math.floor(Math.random() * nonNoble.length)];
+    const pos = randomFreeCell();
+    orbs.push({ x: pos.x, y: pos.y, el, isNoble: false });
+  }
+}
+
+// Find a cell that has no snake segment and no existing orb
+function randomFreeCell() {
+  let pos;
+  let tries = 0;
+  do {
+    pos = { x: Math.floor(Math.random() * COLS), y: Math.floor(Math.random() * ROWS) };
+    tries++;
+  } while (
+    tries < 200 &&
+    (snake.some(s => s.x === pos.x && s.y === pos.y) ||
+     orbs.some(o  => o.x === pos.x && o.y === pos.y))
+  );
+  return pos;
+}
+
+
+// ================================================================
+// SECTION 18 — DRAWING (Canvas)
+// ================================================================
+function drawCanvas() {
+  const canvas = document.getElementById('gameCanvas');
+  const ctx    = canvas.getContext('2d');
+
+  // Clear with dark background
+  ctx.fillStyle = '#070c18';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // Draw subtle grid dots
+  ctx.fillStyle = 'rgba(42,53,80,0.35)';
+  for (let x = 0; x < COLS; x++) {
+    for (let y = 0; y < ROWS; y++) {
+      ctx.fillRect(x * CELL + 9, y * CELL + 9, 2, 2);
+    }
+  }
+
+  // Draw snake (head is brightest, tail fades)
+  snake.forEach((seg, i) => {
+    const alpha = Math.max(0.15, 1 - i / (snake.length + 5));
+    ctx.fillStyle = `rgba(79,158,255,${alpha})`;
+    ctx.beginPath();
+    // roundRect draws rounded corners — gives a nice look
+    ctx.roundRect(seg.x * CELL + 1, seg.y * CELL + 1, CELL - 2, CELL - 2, 3);
+    ctx.fill();
+    // Draw two white "eyes" on the head
+    if (i === 0) {
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(seg.x * CELL + 5, seg.y * CELL + 5, 3, 3);
+      ctx.fillRect(seg.x * CELL + 12, seg.y * CELL + 5, 3, 3);
+    }
+  });
+
+  // Draw element orbs
+  orbs.forEach(orb => {
+    const cx = orb.x * CELL + CELL / 2;
+    const cy = orb.y * CELL + CELL / 2;
+
+    // Orb radius: fixed in Level 1, based on atomic radius in Level 2
+    let r = CELL / 2 - 2;
+    if (currentLevel === 2) {
+      r = Math.min(CELL / 2 - 1, 4 + orb.el.radius / 20);
+    }
+
+    // Noble gases get a silver/purple colour with dashed border
+    const color = orb.isNoble ? 'rgba(180,180,220,0.85)' : getOrbColor(orb.el);
+
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Noble gas: add dashed warning ring
+    if (orb.isNoble) {
+      ctx.strokeStyle = 'rgba(180,150,240,0.7)';
+      ctx.lineWidth   = 1.5;
+      ctx.setLineDash([3, 3]);
+      ctx.beginPath();
+      ctx.arc(cx, cy, r + 2, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    // Draw element symbol and atomic number inside orb
+    ctx.fillStyle  = 'rgba(0,0,0,0.75)';
+    ctx.textAlign  = 'center';
+    ctx.font       = 'bold 7px sans-serif';
+    ctx.fillText(orb.el.sym, cx, cy + 1);
+    ctx.font       = '6px sans-serif';
+    ctx.fillText(orb.el.z, cx, cy + 8);
+  });
+}
+
+// Colour an orb based on the element's chemical group
+function getOrbColor(el) {
+  const g = el.group;
+  if (g === 'Noble Gas')           return 'rgba(124,58,237,0.8)';
+  if (g === 'Alkali Metal')        return 'rgba(239,68,68,0.85)';
+  if (g === 'Alkaline Earth')      return 'rgba(249,115,22,0.85)';
+  if (g === 'Halogen')             return 'rgba(16,185,129,0.85)';
+  if (g === 'Nonmetal')            return 'rgba(6,182,212,0.85)';
+  if (g === 'Metalloid')           return 'rgba(245,158,11,0.85)';
+  if (g === 'Transition Metal')    return 'rgba(99,102,241,0.85)';
+  return 'rgba(79,158,255,0.85)';  // default blue
+}
+
+
+// ================================================================
+// SECTION 19 — HUD UPDATE
+// ================================================================
+function updateHUD() {
+  document.getElementById('hudLevel').textContent   = currentLevel;
+  document.getElementById('hudRound').textContent   =
+    currentLevel === 1 ? roundNum + '/3' : '—';
+  document.getElementById('hudEaten').textContent   = totalEaten;
+  document.getElementById('hudScore').textContent   = score;
+  document.getElementById('hudLives').textContent   = '❤'.repeat(lives);
+  document.getElementById('hudDiamond').textContent = diamonds;
+  if (currentLevel === 2) {
+    document.getElementById('hudTimer').textContent = timerSecs;
+  }
+}
+
+
+// ================================================================
+// SECTION 20 — KEYBOARD CONTROLS
+// ================================================================
+function handleKey(e) {
+  // Enter dismisses the info card (Level 1)
+  if (e.key === 'Enter') {
+    const infoOpen = !document.getElementById('infoOverlay').classList.contains('hidden');
+    if (infoOpen) { closeInfoCard(); return; }
+  }
+
+  // Arrow / WASD movement — prevent reversing direction
+  const moves = {
+    ArrowUp:    { x: 0, y: -1 }, w: { x: 0, y: -1 }, W: { x: 0, y: -1 },
+    ArrowDown:  { x: 0, y:  1 }, s: { x: 0, y:  1 }, S: { x: 0, y:  1 },
+    ArrowLeft:  { x:-1, y:  0 }, a: { x:-1, y:  0 }, A: { x:-1, y:  0 },
+    ArrowRight: { x: 1, y:  0 }, d: { x: 1, y:  0 }, D: { x: 1, y:  0 }
+  };
+  const nd = moves[e.key];
+  if (nd) {
+    // Prevent reversing (can't go directly backwards)
+    if (!(nd.x === -dir.x && nd.y === -dir.y)) {
+      nextDir = nd;
+    }
+    e.preventDefault(); // prevent page scrolling with arrow keys
+  }
+
+  // P = toggle pause
+  if (e.key === 'p' || e.key === 'P') togglePause();
+}
+
+function togglePause() {
+  paused = !paused;
+  document.querySelector('.hud .btn-secondary').textContent = paused ? 'Resume' : 'Pause';
+}
+
+
+// ================================================================
+// SECTION 21 — BANNER (brief bottom message)
+// ================================================================
+function showBanner(msg) {
+  const b = document.getElementById('gameBanner');
+  b.textContent = msg;
+  b.classList.remove('hidden');
+  b.style.opacity = '1';
+  clearTimeout(b._timeout);
+  b._timeout = setTimeout(() => {
+    b.style.opacity = '0';
+    setTimeout(() => b.classList.add('hidden'), 400);
+  }, 2500);
+}
+
+
+// ================================================================
+// SECTION 22 — OVERLAY HELPERS
+// ================================================================
+function openOverlay(id) {
+  document.getElementById(id).classList.remove('hidden');
+}
+function closeOverlay(id) {
+  document.getElementById(id).classList.add('hidden');
+}
+
+
+// ================================================================
+// SECTION 23 — UTILITY
+// ================================================================
+
+// Shuffle an array randomly (Fisher-Yates algorithm)
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+
+// ================================================================
+// SECTION 24 — INITIALISE
+// ================================================================
+// Build the range cards as soon as the page loads
+buildRangeCards();
+
+</script>
+</body>
+</html>
